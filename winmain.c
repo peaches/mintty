@@ -6,6 +6,7 @@
 #include "winpriv.h"
 
 #include "term.h"
+#include "termsearch.h"
 #include "appinfo.h"
 #include "child.h"
 #include "charset.h"
@@ -513,6 +514,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_NEW: child_fork(main_argv);
         when IDM_COPYTITLE: win_copy_title();
       }
+      
+      switch(HIWORD(wp)) {
+        when EN_CHANGE: search_scrollback();
+      }
+
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
         when SB_BOTTOM:   term_scroll(-1, 0);
@@ -539,10 +545,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
-      if (win_key_down(wp, lp))
+      win_key_down(wp, lp);
+      //if (win_key_down(wp, lp))
         return 0;
     when WM_KEYUP or WM_SYSKEYUP:
-      if (win_key_up(wp, lp))
+      win_key_up(wp, lp);
+      //if (win_key_up(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR:
       child_sendw(&(wchar){wp}, 1);
@@ -1009,14 +1017,18 @@ main(int argc, char *argv[])
   fullscr_on_max = (cfg.window == -1);
   ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
 
+  init_search_results();
+
   // Message loop.
   for (;;) {
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
         return msg.wParam;
-      if (!IsDialogMessage(config_wnd, &msg))
+      if (!IsDialogMessage(config_wnd, &msg)) {
+        TranslateMessage(&msg);
         DispatchMessage(&msg);
+      }
     }
     child_proc();
   }
