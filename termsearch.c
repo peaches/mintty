@@ -17,6 +17,71 @@ int search_width = 150;
 int search_height = 20;
 int margin = 1;
 
+bool search_control_active(void)
+{
+  return GetFocus() == search_wnd;
+}
+
+void toggle_search_control(void)
+{
+  ShowWindow(search_wnd, search_control_showing ? SW_HIDE: SW_SHOW);
+  search_control_showing = !search_control_showing;
+
+  if (search_control_showing)
+    SetFocus(search_wnd);
+
+  search_scrollback();
+}
+
+// Get the area that the search control currently occupies.
+RECT search_control_rectangle(void)
+{
+  RECT cr, search;
+
+  if (search_control_showing) {
+    GetClientRect(wnd, &cr);
+    search.left = cr.right - search_width - margin;
+    search.top = cr.bottom - search_height - margin;
+    search.right = cr.right - margin;
+    search.bottom = cr.bottom - margin;
+  }
+  else {
+    search.left = 0;
+    search.top = 0;
+    search.right = 0;
+    search.bottom = 0;
+  }
+
+  return search;
+}
+
+void init_search(void)
+{
+  RECT cr;
+  GetClientRect(wnd, &cr);
+  HINSTANCE inst = GetModuleHandle(NULL);
+
+  search_wnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
+                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+                              cr.right - search_width - margin, cr.bottom - search_height - margin,
+                              search_width, search_height,
+                              wnd, (HMENU)IDC_EDIT, inst, NULL);
+  toggle_search_control();  // This first call hides the control
+
+  // subclassing
+  default_edit_proc = (WNDPROC)SetWindowLong(search_wnd, GWL_WNDPROC, (long)edit_proc);
+
+  search_results.matches = 0;
+  search_results.capacity = 2;  // Give it a capacity of 2, no particular reason
+  search_results.results = newn(single_result, search_results.capacity);
+}
+
+void remove_search_control_subclassing(void)
+{
+  SetWindowLong(search_wnd, GWL_WNDPROC, (long)default_edit_proc);
+}
+
+
 // While the search box has focus, this allows Alt + F or Escape to
 // hide it.
 LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -99,74 +164,13 @@ int sort_compare(const void * a, const void * b)
   return first->start.y - second->start.y;
 }
 
+// Returns true if the position is contained within a range of a result.
 bool contained_in_results(pos position)
 {
   single_result * result = (single_result *)
     bsearch(&position, search_results.results, search_results.matches, sizeof(single_result), search_compare);
 
   return result != NULL;
-}
-
-bool search_control_active(void)
-{
-  return GetFocus() == search_wnd;
-}
-
-void toggle_search_control(void)
-{
-  ShowWindow(search_wnd, search_control_showing ? SW_HIDE: SW_SHOW);
-  search_control_showing = !search_control_showing;
-
-  if (search_control_showing)
-    SetFocus(search_wnd);
-
-  search_scrollback();
-}
-
-RECT search_control_rectangle(void)
-{
-  RECT cr, search;
-
-  if (search_control_showing) {
-    GetClientRect(wnd, &cr);
-    search.left = cr.right - search_width - margin;
-    search.top = cr.bottom - search_height - margin;
-    search.right = cr.right - margin;
-    search.bottom = cr.bottom - margin;
-  }
-  else {
-    search.left = 0;
-    search.top = 0;
-    search.right = 0;
-    search.bottom = 0;
-  }
-
-  return search;
-}
-
-void init_search(void)
-{
-  RECT cr;
-  GetClientRect(wnd, &cr);
-  HINSTANCE inst = GetModuleHandle(NULL);
-
-  search_wnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
-                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
-                              cr.right - search_width - margin, cr.bottom - search_height - margin,
-                              search_width, search_height,
-                              wnd, (HMENU)IDC_EDIT, inst, NULL);
-  toggle_search_control();
-
-  default_edit_proc = (WNDPROC)SetWindowLong(search_wnd, GWL_WNDPROC, (long)edit_proc);
-
-  search_results.matches = 0;
-  search_results.capacity = 2;  /* Give it a capacity of 2, no reason */
-  search_results.results = newn(single_result, search_results.capacity);
-}
-
-void remove_search_control_subclassing(void)
-{
-  SetWindowLong(search_wnd, GWL_WNDPROC, (long)default_edit_proc);
 }
 
 bool test_results(int x, int y)
@@ -181,56 +185,30 @@ bool test_results(int x, int y)
   return result != NULL;
 }
 
-void print_results()
-{
-  printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-  qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);
-  for (int i = 0; i < search_results.matches; i++) {
-    printf("(%d, %d) -> (%d, %d)\n", 
-      search_results.results[i].start.x, search_results.results[i].start.y,
-      search_results.results[i].end.x, search_results.results[i].end.y);
-  }
-
-  /*
-  printf("%d\n", test_results(8, 1));
-  printf("%d\n", test_results(6, 3));
-  printf("%d\n", test_results(6, 5));
-  printf("%d\n", test_results(6, 7));
-  printf("%d\n", test_results(6, 9));
-  printf("%d\n", test_results(6, 11));
-  printf("%d\n", test_results(6, 13));
-  printf("%d\n", test_results(125, 2));
-  printf("%d\n", test_results(126, 2));
-  printf("%d\n", test_results(0, 3));
-  printf("%d\n", test_results(2, 3));
-  printf("%d\n\n", test_results(3, 3));
-
-  printf("%d\n", test_results(8, 1));
-  printf("%d\n", test_results(11, 1));
-  printf("%d\n\n", test_results(17, 1));
-  */
-
-  fflush(stdout);
-}
-
+// The search logic. What this does is combine the current line and a little bit
+// of the previous line to search for results that are straddling. Otherwise, it
+// would do searches line by line.
 void search_scrollback(void)
 {
-  char query[512];
+  char query[80];
+  query[0] = 0;
+
+  // Only get the text from the control if it is currently being shown.
   if (search_control_showing)
     GetDlgItemText (wnd, IDC_EDIT, query, 512);
-  else
-    query[0] = 0;
+
+  // The max straddle length of this search result.
   int straddle_length = strlen(query) - 1;
 
   search_results.matches = 0;
   if (straddle_length < 0) {
+    // Search is empty, update and leave
     win_update();
     return;
   }
 
   int current = term.curs.y;
   int previous = current - 1;
-
   termline *line = 0;
   termline *prev_line = 0;
   char *chars = 0;
@@ -247,6 +225,8 @@ void search_scrollback(void)
     int size = line->size + straddle_length;
     chars = newn(char, size + 1);
 
+    // Create a string that contains the last few charactesr of the previous line
+    // and put it at the beginning of the search query.
     int offset = 0;
     if (prev_line) {
       int i = prev_line->size;
@@ -257,11 +237,13 @@ void search_scrollback(void)
       offset = straddle_length;
     }
 
+    // Append the current string.
     for (int i = 0; i < line->size; i++) {
       chars[i + offset] = (char)(line->chars + i)->chr;
       chars[i + offset + 1] = 0;
     }
 
+    // Start the search for the query in this string
     char * p = chars;
     while ((p = strstr(p, query)) != NULL) {
       int row = current;
@@ -270,6 +252,8 @@ void search_scrollback(void)
       if (prev_line) {
         end_col -= straddle_length;
         if (col < straddle_length) {
+          // If the results are within the first straddled characters, it
+          // means the result belongs to the previous line.
           row = previous;
           col = prev_line->size - straddle_length + col;
         }
@@ -296,6 +280,7 @@ void search_scrollback(void)
     previous--;
   }
 
+  // Sort the results!
   qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);
   win_update();
 }
