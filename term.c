@@ -4,6 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
+#include "termsearch.h"
 
 #include "win.h"
 #include "charset.h"
@@ -658,7 +659,8 @@ term_paint(void)
           ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
           : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
         );
-      if (term.in_vbell || selected)
+      bool search_result = contained_in_results(scrpos);
+      if (term.in_vbell || selected || search_result)
         tattr ^= ATTR_REVERSE;
 
      /* 'Real' blinking ? */
