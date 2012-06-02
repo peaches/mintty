@@ -4,6 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
+#include "termsearch.h"
 
 #include "minibidi.h"
 
@@ -372,7 +373,9 @@ do_update(void)
 
   update_state = UPDATE_BLOCKED;
 
+  RECT search = search_control_rectangle();
   dc = GetDC(wnd);
+  ExcludeClipRect(dc, search.left, search.top, search.right, search.bottom);  //*** excluding the text area ***//
   term_paint();
   ReleaseDC(wnd, dc);
 

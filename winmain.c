@@ -497,8 +497,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     }
     when WM_CLOSE:
-      if (!cfg.confirm_exit || confirm_exit())
+      if (!cfg.confirm_exit || confirm_exit()) {
         child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
+        remove_search_control_subclassing();
+      }
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
@@ -1015,7 +1017,7 @@ main(int argc, char *argv[])
   fullscr_on_max = (cfg.window == -1);
   ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
 
-  init_search_results();
+  init_search();
 
   // Message loop.
   for (;;) {
