@@ -218,6 +218,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
       p.x != last_click_pos.x || p.y != last_click_pos.y ||
       t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
+  SetFocus(wnd);
   term_mouse_click(b, mods, p, count);
   last_pos = (pos){INT_MIN, INT_MIN};
   last_click_pos = p;
