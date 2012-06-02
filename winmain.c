@@ -545,12 +545,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
-      win_key_down(wp, lp);
-      //if (win_key_down(wp, lp))
+      if (win_key_down(wp, lp))
         return 0;
     when WM_KEYUP or WM_SYSKEYUP:
-      win_key_up(wp, lp);
-      //if (win_key_up(wp, lp))
+      if (win_key_up(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR:
       child_sendw(&(wchar){wp}, 1);
@@ -1026,7 +1024,8 @@ main(int argc, char *argv[])
       if (msg.message == WM_QUIT)
         return msg.wParam;
       if (!IsDialogMessage(config_wnd, &msg)) {
-        TranslateMessage(&msg);
+        if (search_control_active())
+          TranslateMessage(&msg);
         DispatchMessage(&msg);
       }
     }

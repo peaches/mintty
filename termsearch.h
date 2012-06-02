@@ -23,6 +23,7 @@ extern HWND search_wnd;
 bool contained_in_results(pos position);
 void search_scrollback(void);
 void add_result(int startx, int starty, int endx, int endy);
-void init_search_results();
+void init_search_results(void);
+bool search_control_active(void);
 
 #endif

@@ -60,7 +60,7 @@ bool contained_in_results(pos position)
   return result != NULL;
 }
 
-void init_search_results()
+void init_search_results(void)
 {
   HINSTANCE inst = GetModuleHandle(NULL);
 
@@ -73,6 +73,11 @@ void init_search_results()
   search_results.matches = 0;
   search_results.capacity = 2;  /* Give it a capacity of 2, no reason */
   search_results.results = newn(single_result, search_results.capacity);
+}
+
+bool search_control_active(void)
+{
+  return GetFocus() == search_wnd;
 }
 
 bool test_results(int x, int y)
