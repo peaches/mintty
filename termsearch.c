@@ -4,9 +4,50 @@
 
 #include <commctrl.h>
 
-struct search_results search_results;
-HWND search_wnd;
+#define F_KEY 0x46
 
+struct search_results search_results;
+
+HWND search_wnd;
+WNDPROC default_edit_proc;
+
+bool alt = false;
+bool search_control_showing = true;
+int search_width = 150;
+int search_height = 20;
+int margin = 1;
+
+// While the search box has focus, this allows Alt + F or Escape to
+// hide it.
+LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+  switch (msg) {
+    when WM_KEYDOWN or WM_SYSKEYDOWN:
+      switch(wp) {
+        when F_KEY:
+          if (alt) {
+            toggle_search_control();
+            return 0;
+          }
+        when VK_MENU:
+          alt = true;
+          return 0;
+        when VK_ESCAPE:
+          toggle_search_control();
+          return 0;
+      }
+    when WM_KEYUP or WM_SYSKEYUP:
+      if (wp == VK_MENU) {
+        alt = false;
+        return 0;
+      }
+  }
+
+  return CallWindowProc(default_edit_proc, hwnd, msg, wp, lp);
+}
+
+// Adds a search result to the existing set of results. The capacity of the
+// results array will double if it gets maxed.
 void add_result(int startx, int starty, int endx, int endy)
 {
   if (search_results.matches == search_results.capacity) {
@@ -21,24 +62,31 @@ void add_result(int startx, int starty, int endx, int endy)
   search_results.matches++;
 }
 
+// A range binary search, that is, anything between the start of a search
+// result and the end of a search result should be a match.
 int search_compare(const void * pkey, const void * pelem)
 {
   pos * scrpos = (pos *)pkey;
   single_result * elem = (single_result *)pelem;
 
+  // Checks to see if the current position is in the range of this element.
   bool in_range = posle(elem->start, *scrpos) && poslt(*scrpos, elem->end);
 
   if (!in_range) {
-      if (scrpos->y == elem->start.y) {
-        return scrpos->x - elem->start.x;
-      }
+    // If not, we check to see if they are on the same line.
+    if (scrpos->y == elem->start.y) {
+      // On the same line, is the current position before or after this element?
+      return scrpos->x - elem->start.x;
+    }
 
+    // They are not on the same line, is the current line above or below?
     return scrpos->y - elem->start.y;
   }
 
   return 0;
 }
 
+// Comparison for the quicksort to sort all the search results.
 int sort_compare(const void * a, const void * b)
 {
   single_result * first = (single_result *)a;
@@ -53,31 +101,72 @@ int sort_compare(const void * a, const void * b)
 
 bool contained_in_results(pos position)
 {
-  qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);
   single_result * result = (single_result *)
     bsearch(&position, search_results.results, search_results.matches, sizeof(single_result), search_compare);
 
   return result != NULL;
 }
 
-void init_search_results(void)
+bool search_control_active(void)
 {
+  return GetFocus() == search_wnd;
+}
+
+void toggle_search_control(void)
+{
+  ShowWindow(search_wnd, search_control_showing ? SW_HIDE: SW_SHOW);
+  search_control_showing = !search_control_showing;
+
+  if (search_control_showing)
+    SetFocus(search_wnd);
+
+  search_scrollback();
+}
+
+RECT search_control_rectangle(void)
+{
+  RECT cr, search;
+
+  if (search_control_showing) {
+    GetClientRect(wnd, &cr);
+    search.left = cr.right - search_width - margin;
+    search.top = cr.bottom - search_height - margin;
+    search.right = cr.right - margin;
+    search.bottom = cr.bottom - margin;
+  }
+  else {
+    search.left = 0;
+    search.top = 0;
+    search.right = 0;
+    search.bottom = 0;
+  }
+
+  return search;
+}
+
+void init_search(void)
+{
+  RECT cr;
+  GetClientRect(wnd, &cr);
   HINSTANCE inst = GetModuleHandle(NULL);
 
   search_wnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
                               WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
-                              600, 10, 100, 100,
+                              cr.right - search_width - margin, cr.bottom - search_height - margin,
+                              search_width, search_height,
                               wnd, (HMENU)IDC_EDIT, inst, NULL);
-  SetWindowPos(search_wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+  toggle_search_control();
+
+  default_edit_proc = (WNDPROC)SetWindowLong(search_wnd, GWL_WNDPROC, (long)edit_proc);
 
   search_results.matches = 0;
   search_results.capacity = 2;  /* Give it a capacity of 2, no reason */
   search_results.results = newn(single_result, search_results.capacity);
 }
 
-bool search_control_active(void)
+void remove_search_control_subclassing(void)
 {
-  return GetFocus() == search_wnd;
+  SetWindowLong(search_wnd, GWL_WNDPROC, (long)default_edit_proc);
 }
 
 bool test_results(int x, int y)
@@ -126,16 +215,18 @@ void print_results()
 
 void search_scrollback(void)
 {
-  printf("searching results\n");
-  fflush(stdout);
   char query[512];
-  GetDlgItemText (wnd, IDC_EDIT, query, 512); 
-
+  if (search_control_showing)
+    GetDlgItemText (wnd, IDC_EDIT, query, 512);
+  else
+    query[0] = 0;
   int straddle_length = strlen(query) - 1;
+
+  search_results.matches = 0;
   if (straddle_length < 0) {
+    win_update();
     return;
   }
-  search_results.matches = 0;
 
   int current = term.curs.y;
   int previous = current - 1;
@@ -204,6 +295,8 @@ void search_scrollback(void)
     current--;
     previous--;
   }
-  print_results();
+
+  qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);
+  win_update();
 }
 

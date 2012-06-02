@@ -17,13 +17,13 @@ struct search_results {
   single_result *results;
 };
 
-extern struct search_results search_results;
-extern HWND search_wnd;
-
 bool contained_in_results(pos position);
 void search_scrollback(void);
 void add_result(int startx, int starty, int endx, int endy);
-void init_search_results(void);
+void init_search(void);
 bool search_control_active(void);
+void toggle_search_control(void);
+void remove_search_control_subclassing(void);
+RECT search_control_rectangle(void);
 
 #endif
