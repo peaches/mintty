@@ -55,32 +55,10 @@ RECT search_control_rectangle(void)
   return search;
 }
 
-void init_search(void)
-{
-  RECT cr;
-  GetClientRect(wnd, &cr);
-  HINSTANCE inst = GetModuleHandle(NULL);
-
-  search_wnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
-                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
-                              cr.right - search_width - margin, cr.bottom - search_height - margin,
-                              search_width, search_height,
-                              wnd, (HMENU)IDC_EDIT, inst, NULL);
-  toggle_search_control();  // This first call hides the control
-
-  // subclassing
-  default_edit_proc = (WNDPROC)SetWindowLong(search_wnd, GWL_WNDPROC, (long)edit_proc);
-
-  search_results.matches = 0;
-  search_results.capacity = 2;  // Give it a capacity of 2, no particular reason
-  search_results.results = newn(single_result, search_results.capacity);
-}
-
 void remove_search_control_subclassing(void)
 {
   SetWindowLong(search_wnd, GWL_WNDPROC, (long)default_edit_proc);
 }
-
 
 // While the search box has focus, this allows Alt + F or Escape to
 // hide it.
@@ -109,6 +87,27 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   }
 
   return CallWindowProc(default_edit_proc, hwnd, msg, wp, lp);
+}
+
+void init_search(void)
+{
+  RECT cr;
+  GetClientRect(wnd, &cr);
+  HINSTANCE inst = GetModuleHandle(NULL);
+
+  search_wnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
+                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+                              cr.right - search_width - margin, cr.bottom - search_height - margin,
+                              search_width, search_height,
+                              wnd, (HMENU)IDC_EDIT, inst, NULL);
+  toggle_search_control();  // This first call hides the control
+
+  // subclassing
+  default_edit_proc = (WNDPROC)SetWindowLong(search_wnd, GWL_WNDPROC, (long)edit_proc);
+
+  search_results.matches = 0;
+  search_results.capacity = 2;  // Give it a capacity of 2, no particular reason
+  search_results.results = newn(single_result, search_results.capacity);
 }
 
 // Adds a search result to the existing set of results. The capacity of the
