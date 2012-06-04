@@ -404,7 +404,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F10: send_syscommand(IDM_DEFSIZE);
           when VK_F11: send_syscommand(IDM_FULLSCREEN);
           when VK_F12: send_syscommand(IDM_FLIPSCREEN);
-          when 'F': toggle_search_control();
+          when 'F': search_control_displayed() ? focus_search_control(): toggle_search_control();
         }
       }
       return 1;

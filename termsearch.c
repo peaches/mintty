@@ -22,13 +22,23 @@ bool search_control_active(void)
   return GetFocus() == search_wnd;
 }
 
+bool search_control_displayed(void)
+{
+  return search_control_showing;
+}
+
+void focus_search_control(void)
+{
+  SetFocus(search_wnd);
+}
+
 void toggle_search_control(void)
 {
   ShowWindow(search_wnd, search_control_showing ? SW_HIDE: SW_SHOW);
   search_control_showing = !search_control_showing;
 
   if (search_control_showing)
-    SetFocus(search_wnd);
+    focus_search_control();
 
   search_scrollback();
 }

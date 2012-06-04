@@ -22,6 +22,8 @@ void search_scrollback(void);
 void add_result(int startx, int starty, int endx, int endy);
 void init_search(void);
 bool search_control_active(void);
+bool search_control_displayed(void);
+void focus_search_control(void);
 void toggle_search_control(void);
 void remove_search_control_subclassing(void);
 RECT search_control_rectangle(void);
