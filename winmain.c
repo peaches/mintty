@@ -640,6 +640,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (!resizing)
         win_adapt_term_size();
 
+      reposition_search_control();
       return 0;
     }
     when WM_INITMENU:

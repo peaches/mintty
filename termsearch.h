@@ -25,5 +25,6 @@ bool search_control_active(void);
 void toggle_search_control(void);
 void remove_search_control_subclassing(void);
 RECT search_control_rectangle(void);
+void reposition_search_control(void);
 
 #endif

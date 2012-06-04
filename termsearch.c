@@ -89,6 +89,16 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   return CallWindowProc(default_edit_proc, hwnd, msg, wp, lp);
 }
 
+void reposition_search_control(void)
+{
+  RECT cr;
+  GetClientRect(wnd, &cr);
+  SetWindowPos(search_wnd, 0,
+               cr.right - search_width - margin, cr.bottom - search_height - margin,
+               0, 0,
+               SWP_NOSIZE | SWP_NOZORDER);
+}
+
 void init_search(void)
 {
   RECT cr;
