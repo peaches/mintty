@@ -43,6 +43,19 @@ void toggle_search_control(void)
   search_scrollback();
 }
 
+HBRUSH set_search_control_color(WPARAM wp, LPARAM lp)
+{
+  if (GetDlgCtrlID((HWND)lp) == IDC_EDIT && search_results.matches == 0) {
+    SetTextColor((HDC)wp, RGB(255, 0, 0));
+
+    // Give the brush a white color so that the border of the text
+    // control does not come back.
+    return CreateSolidBrush(RGB(255, 255, 255));
+  }
+
+  return NULL;
+}
+
 // Get the area that the search control currently occupies.
 RECT search_control_rectangle(void)
 {
@@ -130,6 +143,11 @@ void init_search(void)
   search_results.results = newn(single_result, search_results.capacity);
 }
 
+void invalidate_search_rect(void)
+{
+  InvalidateRect(search_wnd, NULL, false);
+}
+
 // Adds a search result to the existing set of results. The capacity of the
 // results array will double if it gets maxed.
 void add_result(int startx, int starty, int endx, int endy)
@@ -143,6 +161,11 @@ void add_result(int startx, int starty, int endx, int endy)
   search_results.results[search_results.matches].start.y = starty;
   search_results.results[search_results.matches].end.x = endx;
   search_results.results[search_results.matches].end.y = endy;
+
+  if (search_results.matches == 0) {
+    // We need to invalidate the rectangle to redraw the new color
+    invalidate_search_rect();
+  }
   search_results.matches++;
 }
 
@@ -298,6 +321,9 @@ void search_scrollback(void)
     current--;
     previous--;
   }
+
+  if (search_results.matches == 0)
+    invalidate_search_rect();
 
   // Sort the results!
   qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);

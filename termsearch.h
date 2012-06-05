@@ -25,6 +25,7 @@ bool search_control_active(void);
 bool search_control_displayed(void);
 void focus_search_control(void);
 void toggle_search_control(void);
+HBRUSH set_search_control_color(WPARAM wp, LPARAM lp);
 void remove_search_control_subclassing(void);
 RECT search_control_rectangle(void);
 void reposition_search_control(void);

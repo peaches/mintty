@@ -575,6 +575,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_PAINT:
       win_paint();
       return 0;
+    when WM_CTLCOLOREDIT: {
+      HBRUSH brush = set_search_control_color(wp, lp);
+      if (brush)
+        return (long int)brush;
+    }
     when WM_SETFOCUS:
       term_set_focus(true);
       CreateCaret(wnd, caretbm, 0, 0);
