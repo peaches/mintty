@@ -227,6 +227,20 @@ bool test_results(int x, int y)
   return result != NULL;
 }
 
+void scroll_to_last_result(void)
+{
+  if (search_results.matches > 0) {
+    single_result result = search_results.results[search_results.matches - 1];
+    int offset = (result.end.y + sblines()) - (term.rows / 2);
+    if (offset < 0)
+      offset = 0;
+    term_scroll(1, offset);
+  }
+  else
+    term_scroll(-1, 0);
+
+}
+
 // The search logic. What this does is combine the current line and a little bit
 // of the previous line to search for results that are straddling. Otherwise, it
 // would do searches line by line.
@@ -327,6 +341,7 @@ void search_scrollback(void)
 
   // Sort the results!
   qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);
-  win_update();
+  scroll_to_last_result();
+  //win_update();
 }
 
