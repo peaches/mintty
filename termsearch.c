@@ -238,7 +238,6 @@ void scroll_to_last_result(void)
   }
   else
     term_scroll(-1, 0);
-
 }
 
 // The search logic. What this does is combine the current line and a little bit
@@ -259,7 +258,7 @@ void search_scrollback(void)
   search_results.matches = 0;
   if (straddle_length < 0) {
     // Search is empty, update and leave
-    win_update();
+    scroll_to_last_result();
     return;
   }
 

@@ -659,9 +659,11 @@ term_paint(void)
           ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
           : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
         );
-      bool search_result = contained_in_results(scrpos);
-      if (term.in_vbell || selected || search_result)
+      if (term.in_vbell || selected)
         tattr ^= ATTR_REVERSE;
+
+      if (contained_in_results(scrpos))
+        tattr |= ATTR_SEARCH;
 
      /* 'Real' blinking ? */
       if (term.blink_is_real && (tattr & ATTR_BLINK)) {

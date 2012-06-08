@@ -565,6 +565,10 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (attr & ATTR_REVERSE) {
     colour t = fg; fg = bg; bg = t;
   }
+  if (attr & ATTR_SEARCH) {
+    fg = cfg.search_fg_colour;
+    bg = cfg.search_bg_colour;
+  }
   if (attr & ATTR_INVISIBLE)
     fg = bg;
 
