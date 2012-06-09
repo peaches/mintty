@@ -567,7 +567,8 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   }
   if (attr & ATTR_SEARCH) {
     fg = cfg.search_fg_colour;
-    bg = cfg.search_bg_colour;
+    bg = (attr & ATTR_DIM) ? cfg.current_search_bg_colour : cfg.search_bg_colour;
+    attr &= ~ATTR_DIM;
   }
   if (attr & ATTR_INVISIBLE)
     fg = bg;

@@ -12,6 +12,7 @@ HWND search_wnd;
 WNDPROC default_edit_proc;
 
 bool alt = false;
+bool shift = false;
 bool search_control_showing = true;
 int search_width = 150;
 int search_height = 20;
@@ -101,11 +102,23 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         when VK_ESCAPE:
           toggle_search_control();
           return 0;
+        when VK_RETURN:
+          if (shift)
+            next_result();
+          else
+            prev_result();
+        when VK_SHIFT:
+          shift = true;
+          return 0;
       }
     when WM_KEYUP or WM_SYSKEYUP:
-      if (wp == VK_MENU) {
-        alt = false;
-        return 0;
+      switch(wp) {
+        when VK_MENU:
+          alt = false;
+          return 0;
+        when VK_SHIFT:
+          shift = false;
+          return 0;
       }
   }
 
@@ -139,6 +152,7 @@ void init_search(void)
   default_edit_proc = (WNDPROC)SetWindowLong(search_wnd, GWL_WNDPROC, (long)edit_proc);
 
   search_results.matches = 0;
+  search_results.current = 0;
   search_results.capacity = 2;  // Give it a capacity of 2, no particular reason
   search_results.results = newn(single_result, search_results.capacity);
 }
@@ -207,12 +221,17 @@ int sort_compare(const void * a, const void * b)
 }
 
 // Returns true if the position is contained within a range of a result.
-bool contained_in_results(pos position)
+single_result * contained_in_results(pos position)
 {
   single_result * result = (single_result *)
     bsearch(&position, search_results.results, search_results.matches, sizeof(single_result), search_compare);
 
-  return result != NULL;
+  return result;
+}
+
+bool is_current_result(single_result * result)
+{
+  return result == (search_results.results + search_results.current);
 }
 
 bool test_results(int x, int y)
@@ -227,17 +246,40 @@ bool test_results(int x, int y)
   return result != NULL;
 }
 
-void scroll_to_last_result(void)
+void scroll_to_result(int index)
 {
   if (search_results.matches > 0) {
-    single_result result = search_results.results[search_results.matches - 1];
-    int offset = (result.end.y + sblines()) - (term.rows / 2);
-    if (offset < 0)
-      offset = 0;
-    term_scroll(1, offset);
+    if (index >= 0 && index < search_results.matches) {
+      single_result result = search_results.results[index];
+      int offset = (result.end.y + sblines()) - (term.rows / 2);
+      if (offset < 0)
+        offset = 0;
+      search_results.current = index;
+      term_scroll(1, offset);
+    }
   }
   else
     term_scroll(-1, 0);
+}
+
+void next_result(void)
+{
+  if (search_results.matches > 0) {
+    int next = search_results.current + 1;
+    if (next >= search_results.matches)
+      next = 0;
+    scroll_to_result(next);
+  }
+}
+
+void prev_result(void)
+{
+  if (search_results.matches > 0) {
+    int prev = search_results.current - 1;
+    if (prev < 0)
+      prev = search_results.matches - 1;
+    scroll_to_result(prev);
+  }
 }
 
 // The search logic. What this does is combine the current line and a little bit
@@ -258,7 +300,7 @@ void search_scrollback(void)
   search_results.matches = 0;
   if (straddle_length < 0) {
     // Search is empty, update and leave
-    scroll_to_last_result();
+    scroll_to_result(0);
     return;
   }
 
@@ -340,7 +382,7 @@ void search_scrollback(void)
 
   // Sort the results!
   qsort(search_results.results, search_results.matches, sizeof(single_result), sort_compare);
-  scroll_to_last_result();
+  scroll_to_result(search_results.matches - 1);
   //win_update();
 }
 

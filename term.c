@@ -662,8 +662,12 @@ term_paint(void)
       if (term.in_vbell || selected)
         tattr ^= ATTR_REVERSE;
 
-      if (contained_in_results(scrpos))
+      single_result * result = contained_in_results(scrpos);
+      if (result) {
+        if (is_current_result(result))
+          tattr |= ATTR_DIM; // stealing DIM to indicate current result
         tattr |= ATTR_SEARCH;
+      }
 
      /* 'Real' blinking ? */
       if (term.blink_is_real && (tattr & ATTR_BLINK)) {

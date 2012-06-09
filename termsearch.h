@@ -12,15 +12,19 @@ typedef struct {
 } single_result;
 
 struct search_results {
+  int current;
   int matches;
   int capacity;
   single_result *results;
 };
 
-bool contained_in_results(pos position);
+void init_search(void);
+single_result * contained_in_results(pos position);
+bool is_current_result(single_result * result);
 void search_scrollback(void);
 void add_result(int startx, int starty, int endx, int endy);
-void init_search(void);
+void next_result(void);
+void prev_result(void);
 bool search_control_active(void);
 bool search_control_displayed(void);
 void focus_search_control(void);
