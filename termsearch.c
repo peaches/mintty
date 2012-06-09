@@ -11,8 +11,6 @@ struct search_results search_results;
 HWND search_wnd;
 WNDPROC default_edit_proc;
 
-bool alt = false;
-bool shift = false;
 bool search_control_showing = true;
 int search_width = 150;
 int search_height = 20;
@@ -92,34 +90,19 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       switch(wp) {
         when F_KEY:
-          if (alt) {
+          if (GetKeyState(VK_MENU) < 0) {
             toggle_search_control();
             return 0;
           }
-        when VK_MENU:
-          alt = true;
-          return 0;
         when VK_ESCAPE:
           toggle_search_control();
           return 0;
         when VK_RETURN:
-          if (shift)
+          if (GetKeyState(VK_SHIFT) < 0)
             next_result();
           else
             prev_result();
 
-          return 0;
-        when VK_SHIFT:
-          shift = true;
-          return 0;
-      }
-    when WM_KEYUP or WM_SYSKEYUP:
-      switch(wp) {
-        when VK_MENU:
-          alt = false;
-          return 0;
-        when VK_SHIFT:
-          shift = false;
           return 0;
       }
     when WM_CHAR:
