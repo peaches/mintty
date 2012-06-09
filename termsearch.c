@@ -16,9 +16,12 @@ int search_width = 150;
 int search_height = 20;
 int margin = 1;
 
-bool search_control_active(void)
+bool search_should_translate(MSG * msg)
 {
-  return GetFocus() == search_wnd;
+  return GetFocus() == search_wnd
+    && !((msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)
+          && msg->wParam == F_KEY
+          && GetKeyState(VK_MENU) < 0);
 }
 
 bool search_control_displayed(void)

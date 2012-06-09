@@ -25,7 +25,7 @@ void search_scrollback(void);
 void add_result(int startx, int starty, int endx, int endy);
 void next_result(void);
 void prev_result(void);
-bool search_control_active(void);
+bool search_should_translate(MSG * msg);
 bool search_control_displayed(void);
 void focus_search_control(void);
 void toggle_search_control(void);

@@ -1032,7 +1032,8 @@ main(int argc, char *argv[])
       if (msg.message == WM_QUIT)
         return msg.wParam;
       if (!IsDialogMessage(config_wnd, &msg)) {
-        if (search_control_active())
+        // 0x46 == F key, don't translate if it's Alt + F
+        if (search_should_translate(&msg))
           TranslateMessage(&msg);
         DispatchMessage(&msg);
       }
@@ -1040,3 +1041,18 @@ main(int argc, char *argv[])
     child_proc();
   }
 }
+
+/*
+ * Message structure
+typedef struct tagMSG {
+    HWND        hwnd;
+    UINT        message;
+    WPARAM      wParam;
+    LPARAM      lParam;
+    DWORD       time;
+    POINT       pt;
+#ifdef _MAC
+    DWORD       lPrivate;
+#endif
+} MSG, *PMSG, NEAR *NPMSG, FAR *LPMSG;
+*/
