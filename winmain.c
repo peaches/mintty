@@ -1041,18 +1041,3 @@ main(int argc, char *argv[])
     child_proc();
   }
 }
-
-/*
- * Message structure
-typedef struct tagMSG {
-    HWND        hwnd;
-    UINT        message;
-    WPARAM      wParam;
-    LPARAM      lParam;
-    DWORD       time;
-    POINT       pt;
-#ifdef _MAC
-    DWORD       lPrivate;
-#endif
-} MSG, *PMSG, NEAR *NPMSG, FAR *LPMSG;
-*/
