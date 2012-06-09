@@ -107,6 +107,8 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             next_result();
           else
             prev_result();
+
+          return 0;
         when VK_SHIFT:
           shift = true;
           return 0;
@@ -118,6 +120,12 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
           return 0;
         when VK_SHIFT:
           shift = false;
+          return 0;
+      }
+    when WM_CHAR:
+      switch(wp) {
+        // Necessary to stop the beeping!
+        when VK_RETURN or VK_ESCAPE or VK_MENU:
           return 0;
       }
   }
