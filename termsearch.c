@@ -18,6 +18,10 @@ int margin = 1;
 
 bool search_should_translate(MSG * msg)
 {
+  // It should translate the message if the message is not the hotkey
+  // used to turn off the search control box. The reason for this is
+  // that we don't need it to be translated, and it causes a beep to
+  // occur. As a result, we do not translate if it's our hotkey.
   return GetFocus() == search_wnd
     && !((msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)
           && msg->wParam == F_KEY
