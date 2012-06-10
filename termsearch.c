@@ -249,11 +249,20 @@ void scroll_to_result(int index)
   if (search_results.matches > 0) {
     if (index >= 0 && index < search_results.matches) {
       single_result result = search_results.results[index];
-      int offset = (result.end.y + sblines()) - (term.rows / 2);
-      if (offset < 0)
-        offset = 0;
+      int result_offset = result.end.y + sblines();
+      int scroll_offset = result_offset - (term.rows / 2);
+      if (scroll_offset < 0)
+        scroll_offset = 0;
       search_results.current = index;
-      term_scroll(1, offset);
+
+      // Check to see if it's currently on the screen, we only scroll to it if
+      // it is off of the screen. Otherwise we just update the screen
+      int screen_offset = sblines() + term.disptop;
+      if (!(result_offset >= screen_offset
+            && result_offset < (screen_offset + term.rows)))
+        term_scroll(1, scroll_offset);
+      else
+        win_update();
     }
   }
   else
