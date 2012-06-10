@@ -5,6 +5,7 @@
 #include <commctrl.h>
 
 #define F_KEY 0x46
+#define MAX_SEARCH_LENGTH 80
 
 struct search_results search_results;
 
@@ -144,6 +145,7 @@ void init_search(void)
                               cr.right - search_width - margin, cr.bottom - search_height - margin,
                               search_width, search_height,
                               wnd, (HMENU)IDC_EDIT, inst, NULL);
+  SendMessage(search_wnd, EM_LIMITTEXT, MAX_SEARCH_LENGTH, 0);
   toggle_search_control();  // This first call hides the control
 
   // subclassing
@@ -294,12 +296,12 @@ void prev_result(void)
 // would do searches line by line.
 void search_scrollback(void)
 {
-  char query[80];
+  char query[MAX_SEARCH_LENGTH];
   query[0] = 0;
 
   // Only get the text from the control if it is currently being shown.
   if (search_control_showing)
-    GetDlgItemText (wnd, IDC_EDIT, query, 512);
+    GetDlgItemText (wnd, IDC_EDIT, query, MAX_SEARCH_LENGTH);
 
   // The max straddle length of this search result.
   int straddle_length = strlen(query) - 1;
