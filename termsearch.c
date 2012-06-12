@@ -37,6 +37,7 @@ bool search_control_displayed(void)
 void focus_search_control(void)
 {
   SetFocus(search_wnd);
+  SendMessage(search_wnd, EM_SETSEL, 0, -1);
 }
 
 void toggle_search_control(void)
@@ -47,6 +48,7 @@ void toggle_search_control(void)
   if (search_control_showing)
     focus_search_control();
 
+  // This is necessary in all cases so that search results are unhilighted
   search_scrollback();
 }
 
