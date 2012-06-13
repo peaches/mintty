@@ -395,7 +395,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     // Alt+Fn shortcuts
-    if (cfg.alt_fn_shortcuts && alt && ((VK_F1 <= key && key <= VK_F24) || key == 'F')) {
+    if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
       if (!ctrl) {
         switch (key) {
           when VK_F2:  send_syscommand(IDM_NEW);
@@ -404,7 +404,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F10: send_syscommand(IDM_DEFSIZE);
           when VK_F11: send_syscommand(IDM_FULLSCREEN);
           when VK_F12: send_syscommand(IDM_FLIPSCREEN);
-          when 'F': search_control_displayed() ? focus_search_control(): toggle_search_control();
+          when VK_F3: search_control_displayed() ? focus_search_control(): toggle_search_control();
         }
       }
       return 1;

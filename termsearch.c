@@ -4,7 +4,6 @@
 
 #include <commctrl.h>
 
-#define F_KEY 0x46
 #define MAX_SEARCH_LENGTH 80
 
 struct search_results search_results;
@@ -25,7 +24,7 @@ bool search_should_translate(MSG * msg)
   // occur. As a result, we do not translate if it's our hotkey.
   return GetFocus() == search_wnd
     && !((msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)
-          && msg->wParam == F_KEY
+          && msg->wParam == VK_F3
           && GetKeyState(VK_MENU) < 0);
 }
 
@@ -99,7 +98,7 @@ LRESULT edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   switch (msg) {
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       switch(wp) {
-        when F_KEY:
+        when VK_F3:
           if (GetKeyState(VK_MENU) < 0) {
             toggle_search_control();
             return 0;
