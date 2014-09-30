@@ -92,6 +92,7 @@ enum {
   ATTR_PROTECTED = 0x1000000u,
   ATTR_WIDE      = 0x2000000u,
   ATTR_NARROW    = 0x4000000u,
+  ATTR_SEARCH    = 0x8000000u,
 
   TATTR_RIGHTCURS = 0x10000000u, /* cursor-on-RHS */
   TATTR_PASCURS   = 0x20000000u, /* passive cursor (box) */

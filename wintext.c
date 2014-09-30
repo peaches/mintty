@@ -4,6 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
+#include "termsearch.h"
 
 #include "minibidi.h"
 
@@ -372,7 +373,9 @@ do_update(void)
 
   update_state = UPDATE_BLOCKED;
 
+  RECT search = search_control_rectangle();
   dc = GetDC(wnd);
+  ExcludeClipRect(dc, search.left, search.top, search.right, search.bottom);  //*** excluding the text area ***//
   term_paint();
   ReleaseDC(wnd, dc);
 
@@ -561,6 +564,11 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   }
   if (attr & ATTR_REVERSE) {
     colour t = fg; fg = bg; bg = t;
+  }
+  if (attr & ATTR_SEARCH) {
+    fg = cfg.search_fg_colour;
+    bg = (attr & ATTR_DIM) ? cfg.current_search_bg_colour : cfg.search_bg_colour;
+    attr &= ~ATTR_DIM;
   }
   if (attr & ATTR_INVISIBLE)
     fg = bg;

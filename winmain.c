@@ -6,6 +6,7 @@
 #include "winpriv.h"
 
 #include "term.h"
+#include "termsearch.h"
 #include "appinfo.h"
 #include "child.h"
 #include "charset.h"
@@ -496,8 +497,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     }
     when WM_CLOSE:
-      if (!cfg.confirm_exit || confirm_exit())
+      if (!cfg.confirm_exit || confirm_exit()) {
         child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
+        remove_search_control_subclassing();
+      }
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
@@ -513,6 +516,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_NEW: child_fork(main_argv);
         when IDM_COPYTITLE: win_copy_title();
       }
+      
+      switch(HIWORD(wp)) {
+        when EN_CHANGE: search_scrollback();
+      }
+
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
         when SB_BOTTOM:   term_scroll(-1, 0);
@@ -567,6 +575,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_PAINT:
       win_paint();
       return 0;
+    when WM_CTLCOLOREDIT: {
+      HBRUSH brush = set_search_control_color(wp, lp);
+      if (brush)
+        return (long int)brush;
+    }
     when WM_SETFOCUS:
       term_set_focus(true);
       CreateCaret(wnd, caretbm, 0, 0);
@@ -632,6 +645,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (!resizing)
         win_adapt_term_size();
 
+      reposition_search_control();
       return 0;
     }
     when WM_INITMENU:
@@ -1009,14 +1023,20 @@ main(int argc, char *argv[])
   fullscr_on_max = (cfg.window == -1);
   ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
 
+  init_search();
+
   // Message loop.
   for (;;) {
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
         return msg.wParam;
-      if (!IsDialogMessage(config_wnd, &msg))
+      if (!IsDialogMessage(config_wnd, &msg)) {
+        // 0x46 == F key, don't translate if it's Alt + F
+        if (search_should_translate(&msg))
+          TranslateMessage(&msg);
         DispatchMessage(&msg);
+      }
     }
     child_proc();
   }

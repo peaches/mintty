@@ -6,6 +6,7 @@
 
 #include "charset.h"
 #include "child.h"
+#include "termsearch.h"
 
 #include <math.h>
 #include <windowsx.h>
@@ -218,6 +219,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
       p.x != last_click_pos.x || p.y != last_click_pos.y ||
       t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
+  SetFocus(wnd);
   term_mouse_click(b, mods, p, count);
   last_pos = (pos){INT_MIN, INT_MIN};
   last_click_pos = p;
@@ -402,6 +404,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F10: send_syscommand(IDM_DEFSIZE);
           when VK_F11: send_syscommand(IDM_FULLSCREEN);
           when VK_F12: send_syscommand(IDM_FLIPSCREEN);
+          when VK_F3: search_control_displayed() ? focus_search_control(): toggle_search_control();
         }
       }
       return 1;
